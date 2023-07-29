@@ -10,6 +10,7 @@ import { oddsCron } from "./crons/oddsCron.js";
 import http from "http";
 import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
 import { createScheduleMiddleware } from "./middleware/scheduleMiddleware.js";
+import { xml_change_odds } from "./middleware/changeXML.js";
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ connectDb().then(() => {
     server.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
-    // createScheduleMiddleware();
+    createScheduleMiddleware();
     scheduleCron();
     oddsCron();
 

@@ -1,7 +1,6 @@
 import { Server } from "socket.io";
-import { getOddsGf } from "../controllers/oddsController.js";
-import { getScheduleMiddleware } from "./scheduleMiddleware.js";
-import { getDetail } from "../crawler/matchDetailCrawl.js";
+import { parseXmlToJs, readXmlFile, xml_change_odds, xml_change_schedule } from "./changeXML.js";
+
 
 const createWebSocketServer = (server) => {
     const io = new Server(server, {
@@ -12,42 +11,53 @@ const createWebSocketServer = (server) => {
     // Function to emit odds data
     const emitOdds = async(socket) => {
         try {
-            const data = await getOddsGf();
-            socket.emit("ODDS", data);
+            await xml_change_odds();
+            const filePath = "./data_xml/odds_data.xml";
+            const xmlData = await readXmlFile(filePath);
+            const jsData = await parseXmlToJs(xmlData);
+            socket.emit("ODDS", JSON.stringify(jsData));
         } catch (error) {
-            console.error("Error while getting odds data:", error.message);
-            socket.emit("ERROR", "An error occurred while fetching odds data.");
+            console.error("Error while emitting odds data:", error.message);
+            socket.emit("ERROR", "An error occurred while emitting odds data.");
+            if (error.message.includes("ETIMEDOUT")) {
+                setTimeout(async() => await emitOdds(socket), 5000);
+            }
         }
     };
 
-    // Function to emit schedule data
     const emitSchedule = async(socket) => {
         try {
-            const checkID = await getScheduleMiddleware();
-            const promises = checkID.map((e) => getDetail(e));
-            const results = await Promise.allSettled(promises);
-            const filteredSchedules = results
-                .filter((result) => result.status === "fulfilled")
-                .map((result) => result.value);
-            socket.emit("SCHEDULE", filteredSchedules);
+            await xml_change_schedule()
+            const filePath = "./data_xml/schedule_data.xml";
+            const xmlData = await readXmlFile(filePath);
+            const jsData = await parseXmlToJs(xmlData);
+            socket.emit("SCHEDULE", JSON.stringify(jsData));
         } catch (error) {
             console.error("Error while fetching schedule data:", error.message);
             socket.emit("ERROR", "An error occurred while fetching schedule data.");
+            if (error.message.includes("ETIMEDOUT")) {
+                setTimeout(async() => await emitSchedule(socket), 5000);
+            }
         }
     };
     io.on("connection", async(socket) => {
-        emitOdds(socket);
-        emitSchedule(socket);
+        try {
+            await emitSchedule(socket);
+            await emitOdds(socket);
 
-        const intervalOdds = setInterval(() => emitOdds(socket), 5000);
-        const intervalSchedule = setInterval(() => emitSchedule(socket), 60000);
-        socket.on("message", (message) => {
-            console.log("Received message:", message);
-        });
-        socket.on("disconnect", () => {
-            clearInterval(intervalOdds);
-            clearInterval(intervalSchedule);
-        });
+            const intervalOdds = setInterval(async() => await emitOdds(socket), 5000);
+            const intervalSchedule = setInterval(async() => await emitSchedule(socket), 60000);
+            socket.on("message", (message) => {
+                console.log("Received message:", message);
+            });
+            socket.on("disconnect", () => {
+                clearInterval(intervalOdds);
+                clearInterval(intervalSchedule);
+            });
+        } catch (error) {
+            console.error("Error while processing socket connection:", error.message);
+            socket.emit("ERROR", "An error occurred while processing socket connection.");
+        }
     });
 };
 
