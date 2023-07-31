@@ -101,49 +101,6 @@ const getScheduleRT = async() => {
     }
 };
 
-const getScheduletest = async() => {
-    try {
-        const data = await getOddsGf();
-
-        const matchIds = data.map((match) => match.MATCH_ID);
-        const schedules = await DBSchedule.find({
-            MATCH_ID: { $in: matchIds },
-        });
-
-        const mergedData = data.map((match) => {
-            const schedule = schedules.find((item) => item.MATCH_ID === match.MATCH_ID);
-            return {...match, ...(schedule && schedule.toObject()) };
-        });
-
-        const extractedData = mergedData.map((match) => {
-            return {
-                MATCH_ID: match.MATCH_ID,
-                HOME_NAME: match.HOME_NAME,
-                AWAY_NAME: match.AWAY_NAME,
-                SCORE_HOME: match.SCORE_HOME,
-                SCORE_AWAY: match.SCORE_AWAY,
-                MATCH_TIME: match.MATCH_TIME,
-                LEAGUE_ID: match.LEAGUE_ID,
-                LEAGUE_NAME: match.LEAGUE_NAME,
-                ODDS: {
-                    Handicap: match.Handicap,
-                    HomeHandicap: match.HomeHandicap,
-                    AwayHandicap: match.AwayHandicap,
-                    HW: match.HW,
-                    D: match.D,
-                    AW: match.AW,
-                    Over: match.Over,
-                    Goals: match.Goals,
-                    Under: match.Under,
-                }
-            };
-        });
-
-        return extractedData;
-    } catch (error) {
-        throw new Error("Internal server error");
-    }
-};
 
 const updateSchedule = async(scheduleData) => {
     const {
@@ -198,6 +155,48 @@ const updateScheduleByTime = async(startTime, endTime, matchId, updatedData) => 
     return updatedSchedule;
 };
 
+// const getScheduletest = async() => {
+//     try {
+//         const data = await getOddsGf();
 
+//         const matchIds = data.map((match) => match.MATCH_ID);
+//         const schedules = await DBSchedule.find({
+//             MATCH_ID: { $in: matchIds },
+//         });
 
-export { getSchedule, getScheduleAll, getScheduleByTime, updateSchedule, updateScheduleByTime, getScheduleMixOdds, getScheduletest, getScheduleRT };
+//         const mergedData = data.map((match) => {
+//             const schedule = schedules.find((item) => item.MATCH_ID === match.MATCH_ID);
+//             return {...match, ...(schedule && schedule.toObject()) };
+//         });
+
+//         const extractedData = mergedData.map((match) => {
+//             return {
+//                 MATCH_ID: match.MATCH_ID,
+//                 HOME_NAME: match.HOME_NAME,
+//                 AWAY_NAME: match.AWAY_NAME,
+//                 SCORE_HOME: match.SCORE_HOME,
+//                 SCORE_AWAY: match.SCORE_AWAY,
+//                 MATCH_TIME: match.MATCH_TIME,
+//                 LEAGUE_ID: match.LEAGUE_ID,
+//                 LEAGUE_NAME: match.LEAGUE_NAME,
+//                 ODDS: {
+//                     Handicap: match.Handicap,
+//                     HomeHandicap: match.HomeHandicap,
+//                     AwayHandicap: match.AwayHandicap,
+//                     HW: match.HW,
+//                     D: match.D,
+//                     AW: match.AW,
+//                     Over: match.Over,
+//                     Goals: match.Goals,
+//                     Under: match.Under,
+//                 }
+//             };
+//         });
+
+//         return extractedData;
+//     } catch (error) {
+//         throw new Error("Internal server error");
+//     }
+// };
+
+export { getSchedule, getScheduleAll, getScheduleByTime, updateSchedule, updateScheduleByTime, getScheduleMixOdds, getScheduleRT };
