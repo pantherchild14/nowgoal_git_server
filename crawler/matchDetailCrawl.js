@@ -44,10 +44,10 @@ const getDetail = async(matchid) => {
         const league = $("#fbheader span[class='LName']").text().trim();
         const match = {
             MATCH_ID: matchid,
-            // HOME_NAME: home,
-            // AWAY_NAME: away,
-            // LEAGUE_NAME: league,
-            // MATCH_TIME: matchTime,
+            HOME_NAME: home,
+            AWAY_NAME: away,
+            LEAGUE_NAME: league,
+            MATCH_TIME: matchTime,
             STATUS: status,
         };
 
@@ -83,5 +83,7 @@ const getDetail = async(matchid) => {
         throw err;
     }
 }
+
+
 
 export { getDetail };

@@ -2,15 +2,16 @@ import dotenv from "dotenv";
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
+import http from "http";
 import scheduleRouter from "./routers/scheduleRouter.js";
 import oddsRouter from "./routers/oddsRouter.js";
 import xmlRouter from "./routers/xmlRouter.js";
 import connectDb from "./configs/mongooseDb.js";
 import { scheduleCron } from "./crons/scheduleCron.js";
 import { oddsCron } from "./crons/oddsCron.js";
-import http from "http";
 import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
 import { createScheduleMiddleware } from "./middleware/scheduleMiddleware.js";
+import { getXmlOddsSingleChange } from "./controllers/xmlController.js";
 
 dotenv.config();
 

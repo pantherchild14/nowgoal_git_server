@@ -8,7 +8,7 @@ const createWebSocketServer = (server) => {
             origin: "*",
         },
     });
-    // Function to emit odds data
+
     const emitOdds = async(socket) => {
         try {
             await xml_change_odds();
@@ -40,6 +40,7 @@ const createWebSocketServer = (server) => {
             }
         }
     };
+
     io.on("connection", async(socket) => {
         try {
             await emitSchedule(socket);
@@ -47,6 +48,7 @@ const createWebSocketServer = (server) => {
 
             const intervalOdds = setInterval(async() => await emitOdds(socket), 5000);
             const intervalSchedule = setInterval(async() => await emitSchedule(socket), 60000);
+
             socket.on("message", (message) => {
                 console.log("Received message:", message);
             });
