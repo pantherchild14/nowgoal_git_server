@@ -1,22 +1,19 @@
 import { addDays, startOfDay, addHours, startOfHour } from "date-fns";
-import { getScheduleAll, getScheduleByTime } from "../controllers/scheduleController.js";
+import { getScheduleAll, getScheduleByTime, updateSchedule } from "../controllers/scheduleController.js";
 import { crawlSchedule, crawlStatusSchedule } from "../crawler/scheduleCrawl.js";
+import { parseXmlToJs, readXmlFile } from "./changeXML.js";
 
 const createScheduleMiddleware = async(req, res, next) => {
     try {
-        const currentDate = new Date();
-        // currentDate.setDate(currentDate.getDate() - 1);
+        const filePath = "./data_xml/scheduleAll_data.xml";
+        const xmlData = await readXmlFile(filePath);
+        const jsData = await parseXmlToJs(xmlData);
+        const dataJS = (jsData['SCHEDULE_DATA']['SCHEDULE_ITEM']);
+        Object.values(dataJS).forEach(async(match) => {
+            await updateSchedule(match.$);
+        });
 
-        function formatDate(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        const formattedDate = formatDate(currentDate);
-
-        await crawlSchedule(formattedDate);
+        /* convert data XML */
     } catch (error) {
         console.error("Error retrieving createScheduleMiddleware: ", error);
     }

@@ -16,7 +16,7 @@ const crawlOdds = async(matchid) => {
     const DOMAIN = process.env.DOMAIN;
     const t = 1;
     const FT = 0;
-    const HT = 1
+    const HT = 1;
 
     const replacedUrlFT = generateUrl(DOMAIN, t, matchid, FT, currentTime);
     const replacedUrlHT = generateUrl(DOMAIN, t, matchid, HT, currentTime);
@@ -25,7 +25,7 @@ const crawlOdds = async(matchid) => {
         const dataHT = await curl(replacedUrlHT);
 
         if (dataFT["ErrCode"] !== 0 || dataHT["ErrCode"] !== 0) {
-            return;
+            return null;
         }
 
         const mixoddsFT = dataFT["Data"]["mixodds"];
@@ -45,11 +45,12 @@ const crawlOdds = async(matchid) => {
             });
         }
 
-        await updatedOdds(arrResFT)
+        // await updatedOdds(arrResFT)
+        return arrResFT;
     } catch (err) {
-        throw new Error("Internal server error");
+        return null;
     }
-}
+};
 
 const oddsFT = (matchid, str) => {
     const oddAh = JSON.stringify(str["ah"]);

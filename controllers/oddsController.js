@@ -1,4 +1,6 @@
 import crawlGfOdds from "../crawler/gfdataoddsCrawl.js";
+import { crawlOdds } from "../crawler/oddsCrawl.js";
+import { parseXmlToJs, readXmlFile } from "../middleware/changeXML.js";
 import { DBOdds } from "../models/oddsModel.js";
 import { DBSchedule } from "../models/scheduleModel.js";
 
@@ -39,6 +41,28 @@ const getOddsGf = async() => {
     }
 };
 
+const getOddsXML = async() => {
+    try {
+        const filePath = "./data_xml/scheduleAll_data.xml";
+        const xmlData = await readXmlFile(filePath);
+        const jsData = await parseXmlToJs(xmlData);
+
+        const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+        const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+        const promises = matchIDs.map((id) => crawlOdds(id));
+        const odds = await Promise.all(promises);
+
+        const validOdds = odds.filter((odd) => odd !== null);
+
+        return Promise.resolve(validOdds);
+    } catch (error) {
+        console.error("Error while fetching odds data: ", error);
+        return Promise.resolve([]);
+    }
+};
+
+
 const updatedOdds = async(oddsData) => {
     const {
         MATCH_ID,
@@ -63,4 +87,4 @@ const updatedOdds = async(oddsData) => {
     return updateOdds;
 };
 
-export { getOdds, updatedOdds, getOddsGf };
+export { getOdds, updatedOdds, getOddsGf, getOddsXML };

@@ -53,10 +53,19 @@ const crawlSchedule = async(date) => {
 
             arrMatch[item.MATCH_ID] = item;
         });
-        Object.values(arrMatch).forEach(async(match) => {
-            // await updateSchedule(match);
-            await updateSchedule(match)
-        });
+        // Object.values(arrMatch).forEach(async(match) => {
+        //     // await updateSchedule(match);
+        //     // await updateSchedule(match)
+        // });
+
+        /* convert data XML */
+
+        const results = [];
+        for (const match of Object.values(arrMatch)) {
+            const matchs = await match;
+            results.push(matchs);
+        }
+        return results;
     } catch (error) {
         console.error("Error:", error);
         throw new Error("Internal server error");

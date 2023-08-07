@@ -1,14 +1,18 @@
-import cron from "node-cron";
-import { oddsByTimeMiddlerware, oddsMiddlerware } from "../middleware/oddsMiddleware.js";
+import schedule from 'node-schedule';
+import { xml_h2h, xml_odds } from "../middleware/changeXML.js";
+
+let oddsH2HCron;
+let oddsOddsCron;
 
 export const oddsCron = async() => {
-    cron.schedule("*/5 * * * *", async() => {
-        oddsMiddlerware();
-        console.log("Crawling odds 5p...");
+    // Schedule the cron jobs and store them in the variables
+    oddsH2HCron = schedule.scheduleJob("odds-h2h", "0 */60 * * *", async() => {
+        await xml_h2h();
+        console.log("Crawling odds h2h every 60 minutes...");
     });
 
-    // cron.schedule("*/10 * * * * *", async() => {
-    //     oddsByTimeMiddlerware();
-    //     console.log("Crawling odds 10s...");
-    // });
-}
+    oddsOddsCron = schedule.scheduleJob("odds-odds", "*/30 * * * * *", async() => {
+        await xml_odds();
+        console.log("Crawling odds every 30 seconds...");
+    });
+};

@@ -11,7 +11,7 @@ import { scheduleCron } from "./crons/scheduleCron.js";
 import { oddsCron } from "./crons/oddsCron.js";
 import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
 import { createScheduleMiddleware } from "./middleware/scheduleMiddleware.js";
-import { getXmlOddsSingleChange } from "./controllers/xmlController.js";
+import { xml_h2h, xml_odds, xml_schedule } from "./middleware/changeXML.js";
 
 dotenv.config();
 
@@ -34,7 +34,8 @@ connectDb().then(() => {
     server.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
-    createScheduleMiddleware();
+
+    // Lập lịch các công việc
     scheduleCron();
     oddsCron();
 
