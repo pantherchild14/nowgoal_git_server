@@ -114,6 +114,19 @@ const getXmlOddsSingleAll = async(req, res) => {
     }
 }
 
+const getXmlOddsAll = async(req, res) => {
+    try {
+        const filePath = "./data_xml/oddsAll_data.xml";
+        const xmlData = await readXmlFile(filePath);
+        const jsData = await parseXmlToJs(xmlData);
+
+        res.status(200).json(jsData);
+    } catch (error) {
+        console.error("Error while emitting status data:", error.message);
+        res.status(500).json({ error: "Error while emitting status data" });
+    }
+}
+
 const getXmlH2H = async(req, res) => {
     try {
         const filePath = "./data_xml/h2h_data.xml";
@@ -138,4 +151,4 @@ const getXmlH2H = async(req, res) => {
 
 
 
-export { getXmlOddsChange, getXmlStatusChange, getXmlOddsSingleChange, getXmlScheduleSingleChange, getXmlScheduleSingleAll, getXmlOddsSingleAll, getXmlH2H };
+export { getXmlOddsChange, getXmlStatusChange, getXmlOddsSingleChange, getXmlScheduleSingleChange, getXmlScheduleSingleAll, getXmlOddsSingleAll, getXmlOddsAll, getXmlH2H };
