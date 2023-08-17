@@ -6,12 +6,13 @@ import http from "http";
 import scheduleRouter from "./routers/scheduleRouter.js";
 import oddsRouter from "./routers/oddsRouter.js";
 import xmlRouter from "./routers/xmlRouter.js";
+import userRouter from "./routers/userRouter.js";
 import connectDb from "./configs/mongooseDb.js";
 import { scheduleCron } from "./crons/scheduleCron.js";
 import { oddsCron } from "./crons/oddsCron.js";
 import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
 import { createScheduleMiddleware } from "./middleware/scheduleMiddleware.js";
-import { xml_h2h, xml_odds, xml_schedule } from "./middleware/changeXML.js";
+import { xml_h2h, xml_schedule } from "./middleware/changeXML.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use(cors());
 app.use("/schedule", scheduleRouter);
 app.use("/odds", oddsRouter);
 app.use("/ajax/soccerajax", xmlRouter);
+app.use("/api/users", userRouter)
 
 connectDb().then(() => {
     const server = http.createServer(app);
