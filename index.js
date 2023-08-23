@@ -1,0 +1,52 @@
+import dotenv from "dotenv";
+import express from "express";
+import bodyParser from "body-parser";
+import cors from "cors";
+import http from "http";
+import scheduleRouter from "./routers/scheduleRouter.js";
+import oddsRouter from "./routers/oddsRouter.js";
+import xmlRouter from "./routers/xmlRouter.js";
+import userRouter from "./routers/userRouter.js";
+import connectDb from "./configs/mongooseDb.js";
+import { scheduleCron } from "./crons/scheduleCron.js";
+import { oddsCron } from "./crons/oddsCron.js";
+import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
+import { xml_odds_change_detail } from "./middleware/changeXML.js";
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true, limit: "30mb" }));
+app.use(cors());
+
+
+app.use("/schedule", scheduleRouter);
+app.use("/odds", oddsRouter);
+app.use("/ajax/soccerajax", xmlRouter);
+app.use("/api/users", userRouter)
+
+connectDb().then(() => {
+    const server = http.createServer(app);
+    createWebSocketServer(server);
+
+    server.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+
+    // Lập lịch các công việc
+    // scheduleJobs();
+
+    scheduleCron();
+    oddsCron();
+
+
+    // xml_h2h();
+    // xml_schedule();
+    // createScheduleMiddleware();
+
+}).catch((err) => {
+    console.log("err", err);
+});
