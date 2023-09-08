@@ -2,7 +2,7 @@ import { DBSchedule } from "../models/scheduleModel.js";
 import { DBOdds } from "../models/oddsModel.js";
 import { getOddsGf } from "./oddsController.js";
 
-const getSchedule = async(req, res) => {
+const getSchedule = async (req, res) => {
     try {
         const timestamp = req.body.timestamp;
         const startDate = new Date(timestamp);
@@ -23,7 +23,7 @@ const getSchedule = async(req, res) => {
     }
 };
 
-const getScheduleAll = async(arSelect = []) => {
+const getScheduleAll = async (arSelect = []) => {
     try {
         let selectFields = arSelect.length > 0 ? arSelect.join(" ") : "";
 
@@ -36,7 +36,7 @@ const getScheduleAll = async(arSelect = []) => {
     }
 };
 
-const getScheduleByTime = async(begin, end, arSelect = []) => {
+const getScheduleByTime = async (begin, end, arSelect = []) => {
     try {
         let selectFields = arSelect.length > 0 ? arSelect.join(" ") : "";
 
@@ -54,7 +54,7 @@ const getScheduleByTime = async(begin, end, arSelect = []) => {
     }
 };
 
-const getScheduleMixOdds = async(req, res) => {
+const getScheduleMixOdds = async (req, res) => {
     try {
         const timestamp = req.body.timestamp;
         const startDate = new Date(timestamp);
@@ -91,7 +91,7 @@ const getScheduleMixOdds = async(req, res) => {
     }
 };
 
-const getScheduleRT = async() => {
+const getScheduleRT = async () => {
     try {
         const data = await getOddsGf();
 
@@ -102,7 +102,7 @@ const getScheduleRT = async() => {
 };
 
 
-const updateSchedule = async(scheduleData) => {
+const updateSchedule = async (scheduleData) => {
     const {
         MATCH_ID,
         HOME_ID,
@@ -144,11 +144,36 @@ const updateSchedule = async(scheduleData) => {
     return updatedSchedule;
 };
 
-const updateScheduleByTime = async(startTime, endTime, matchId, updatedData) => {
+const deleteScheduledMatchesForDate = async () => {
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() - 1);
+
+    const startOfDay = new Date(currentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(currentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+
+    try {
+        const deletedMatches = await DBSchedule.deleteMany({
+            TIME_STAMP: {
+                $gte: (startOfDay),
+                $lte: (endOfDay),
+            }
+        });
+
+        console.log(`Deleted ${deletedMatches.deletedCount} matches.`);
+    } catch (error) {
+        console.error("Error deleting scheduled matches: ", error);
+    }
+};
+
+
+const updateScheduleByTime = async (startTime, endTime, matchId, updatedData) => {
     const updatedSchedule = await DBSchedule.findOneAndUpdate({
-            MATCH_ID: matchId,
-            TIME_STAMP: { $gte: startTime, $lt: endTime },
-        },
+        MATCH_ID: matchId,
+        TIME_STAMP: { $gte: startTime, $lt: endTime },
+    },
         updatedData, { upsert: true, new: true }
     ).lean();
 
@@ -199,4 +224,4 @@ const updateScheduleByTime = async(startTime, endTime, matchId, updatedData) => 
 //     }
 // };
 
-export { getSchedule, getScheduleAll, getScheduleByTime, updateSchedule, updateScheduleByTime, getScheduleMixOdds, getScheduleRT };
+export { getSchedule, getScheduleAll, getScheduleByTime, updateSchedule, updateScheduleByTime, getScheduleMixOdds, getScheduleRT, deleteScheduledMatchesForDate };

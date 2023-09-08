@@ -5,10 +5,6 @@ const DBOddsSchema = new mongoose.Schema({
         type: String,
         required: false,
     },
-    ODDS_ID: {
-        type: String,
-        required: false,
-    },
     ODDS_AH_FT: {
         type: String,
         required: false,

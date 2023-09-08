@@ -3,8 +3,9 @@ import { getSchedule, getScheduleMixOdds } from "../controllers/scheduleControll
 
 const router = express.Router();
 
-router.get("/", (req, res) => {
-    const currentDate = new Date();
+router.get("/:day", (req, res) => {
+    const { day } = req.params;
+    const currentDate = new Date(`${day}T00:00:00Z`);
     const timestamp = currentDate.toISOString();
     const reqWithTimestamp = { body: { timestamp } };
     getSchedule(reqWithTimestamp, res);

@@ -14,6 +14,7 @@ router.get(`/ch_status_xml`, getXmlStatusChange);
 router.get(`/ch_oddsSignle_xml/:id`, (req, res) => getXmlOddsSingleChange(req, res));
 router.get(`/ch_scheduleSingle_xml/:id`, (req, res) => getXmlScheduleSingleChange(req, res));
 router.get(`/odds_change_detail_history_xml/:id`, (req, res) => getXmlOddsChangeDetailHistory(req, res));
+
 /* ---------------------------------------------- */
 
 /* schedule All */

@@ -16,6 +16,7 @@ const createScheduleMiddleware = async (req, res, next) => {
 
         await Promise.all(updatePromises);
 
+
     } catch (error) {
         console.error("Error retrieving createScheduleMiddleware: ", error);
     }

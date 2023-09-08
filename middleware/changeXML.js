@@ -1,9 +1,10 @@
 import xmlbuilder from "xmlbuilder";
 import { promises as fs } from "fs";
 import { Parser } from "xml2js";
-import { getOddsDetailHistoryXML, getOddsGf, getOddsXML } from "../controllers/oddsController.js";
+import { get3in13DayXML, get3in1XML, getOdds3DayXML, getOddsGf, getOddsXML } from "../controllers/oddsController.js";
 import { getDetail, crawlMatchH2H } from "../crawler/matchDetailCrawl.js";
 import { crawlSchedule } from "../crawler/scheduleCrawl.js";
+import { updateSchedule } from "../controllers/scheduleController.js";
 
 const xml_change_odds = async () => {
     let retryCount = 0;
@@ -191,6 +192,77 @@ const xml_schedule = async (req, res, next) => {
     }
 };
 
+const xml_schedule3Day = async (req, res, next) => {
+    try {
+        const currentDate = new Date();
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        const folderPath = "./data_xml";
+        try {
+            await fs.access(folderPath);
+        } catch (err) {
+            await fs.mkdir(folderPath);
+        }
+
+        const filePath = "./data_xml/schedule_3_day.xml";
+        let root;
+        try {
+            const existingData = await fs.readFile(filePath, "utf-8");
+            root = xmlbuilder.create(existingData, { parseOptions: { ignoreDecorators: true } });
+        } catch (error) {
+            root = xmlbuilder.create("SCHEDULE_DATA");
+        }
+
+        for (let i = 0; i <= 2; i++) {
+            const dateToCrawl = new Date(currentDate);
+            dateToCrawl.setDate(dateToCrawl.getDate() + i);
+            const formattedDate = formatDate(dateToCrawl);
+            const results = await crawlSchedule(formattedDate);
+
+            const scheduleArray = Array.isArray(results) ? results : [results];
+
+            scheduleArray.forEach((item) => {
+                const oddsItem = root.ele("SCHEDULE_ITEM");
+                Object.keys(item).forEach((key) => {
+                    oddsItem.att(key, item[key]);
+                });
+            });
+
+            console.log(`Crawled schedule for ${formattedDate}`);
+        }
+
+        const xmlString = root.end({ pretty: true });
+        await fs.writeFile(filePath, xmlString);
+    } catch (error) {
+        console.error("Error crawl schedule xml: ", error);
+    }
+};
+
+const updateScheduleFor3Days = async (req, res, next) => {
+    try {
+        const filePath = "./data_xml/schedule_3_day.xml";
+        const xmlData = await readXmlFile(filePath);
+        const jsData = await parseXmlToJs(xmlData);
+        const dataJS = jsData['SCHEDULE_DATA']['SCHEDULE_ITEM'];
+
+        const updatePromises = dataJS.map(async (match) => {
+            return updateSchedule(match.$);
+        });
+
+        await Promise.all(updatePromises);
+
+
+    } catch (error) {
+        console.error("Error retrieving createScheduleMiddleware: ", error);
+    }
+};
+
 const xml_odds = async (req, res, next) => {
     try {
         let data;
@@ -235,16 +307,108 @@ const xml_odds = async (req, res, next) => {
     }
 };
 
-const xml_odds_change_detail = async (req, res, next) => {
+const xml_odds_3Day = async (req, res, next) => {
     try {
         let data;
         try {
-            data = await getOddsDetailHistoryXML();
+            data = await getOdds3DayXML();
         } catch (error) {
             console.error("Error fetching odds data: ", error);
             return;
         }
 
+        if (!Array.isArray(data)) {
+            console.error("Invalid odds data format. Expected an array.");
+            return;
+        }
+
+        const root = xmlbuilder.create("ODDS_DATA");
+        for (const item of data) {
+            if (!item || typeof item !== "object") {
+                console.error("Invalid odds data format:", item);
+                continue;
+            }
+
+            const oddsItem = root.ele("ODDS_ITEM");
+            for (const key of Object.keys(item)) {
+                oddsItem.att(key, item[key]);
+            }
+        }
+        const xmlString = root.end({ pretty: true });
+        const folderPath = "./data_xml";
+        try {
+            await fs.access(folderPath);
+        } catch (err) {
+            await fs.mkdir(folderPath);
+        }
+
+        const filePath = "./data_xml/oddsAll_data_3_day.xml";
+        await fs.writeFile(filePath, xmlString);
+        console.log("XML file successfully generated.");
+    } catch (error) {
+        console.error("Error crawl odds xml: ", error);
+        return;
+    }
+};
+
+/* --------------------------------------------------------------- */
+/* Odds History was change new type */
+
+// const xml_odds_change_detail = async (req, res, next) => {
+//     try {
+//         let data;
+//         try {
+//             data = await getOddsDetailHistoryXML();
+//         } catch (error) {
+//             console.error("Error fetching odds data: ", error);
+//             return;
+//         }
+//         if (!Array.isArray(data)) {
+//             console.error("Invalid odds data format. Expected an array.");
+//             return;
+//         }
+
+//         const root = xmlbuilder.create("ODDS_DATA");
+//         for (const item of data) {
+//             if (!item || typeof item !== "object") {
+//                 console.error("Invalid odds data format:", item);
+//                 continue;
+//             }
+//             const oddsItem = root.ele("ODDS_ITEM");
+//             for (const key of Object.keys(item)) {
+//                 const safeKey = `_${key}`.replace(/\W+/g, "_");
+//                 oddsItem.att(safeKey, item[key]);
+//             }
+//         }
+//         const xmlString = root.end({ pretty: true });
+//         const folderPath = "./data_xml";
+//         try {
+//             await fs.access(folderPath);
+//         } catch (err) {
+//             await fs.mkdir(folderPath);
+//         }
+
+//         const filePath = "./data_xml/odds_change_detail_history.xml";
+//         await fs.writeFile(filePath, xmlString);
+//         console.log("XML file successfully generated.");
+//     } catch (error) {
+//         console.error("Error crawl odds xml: ", error);
+//         return;
+//     }
+// };
+
+/* --------------------------------------------------------------- */
+
+
+const xml_3in1 = async (req, res, next) => {
+    try {
+        let data;
+        try {
+            data = await get3in1XML();
+        } catch (error) {
+            console.error("Error fetching odds data: ", error);
+            return;
+        }
         if (!Array.isArray(data)) {
             console.error("Invalid odds data format. Expected an array.");
             return;
@@ -270,7 +434,50 @@ const xml_odds_change_detail = async (req, res, next) => {
             await fs.mkdir(folderPath);
         }
 
-        const filePath = "./data_xml/odds_change_detail_history.xml";
+        const filePath = "./data_xml/3in1.xml";
+        await fs.writeFile(filePath, xmlString);
+        console.log("XML file successfully generated.");
+    } catch (error) {
+        console.error("Error crawl odds xml: ", error);
+        return;
+    }
+};
+
+const xml_3in1_3Day = async (req, res, next) => {
+    try {
+        let data;
+        try {
+            data = await get3in13DayXML();
+        } catch (error) {
+            console.error("Error fetching odds data: ", error);
+            return;
+        }
+        if (!Array.isArray(data)) {
+            console.error("Invalid odds data format. Expected an array.");
+            return;
+        }
+
+        const root = xmlbuilder.create("ODDS_DATA");
+        for (const item of data) {
+            if (!item || typeof item !== "object") {
+                console.error("Invalid odds data format:", item);
+                continue;
+            }
+            const oddsItem = root.ele("ODDS_ITEM");
+            for (const key of Object.keys(item)) {
+                const safeKey = `_${key}`.replace(/\W+/g, "_");
+                oddsItem.att(safeKey, item[key]);
+            }
+        }
+        const xmlString = root.end({ pretty: true });
+        const folderPath = "./data_xml";
+        try {
+            await fs.access(folderPath);
+        } catch (err) {
+            await fs.mkdir(folderPath);
+        }
+
+        const filePath = "./data_xml/3in1_3_day.xml";
         await fs.writeFile(filePath, xmlString);
         console.log("XML file successfully generated.");
     } catch (error) {
@@ -302,4 +509,17 @@ const parseXmlToJs = (xmlData) => {
     });
 };
 
-export { xml_change_odds, xml_change_schedule, xml_schedule, xml_odds, xml_odds_change_detail, xml_h2h, readXmlFile, parseXmlToJs };
+export {
+    xml_change_odds,
+    xml_change_schedule,
+    xml_schedule,
+    xml_odds,
+    xml_h2h,
+    readXmlFile,
+    parseXmlToJs,
+    xml_3in1,
+    updateScheduleFor3Days,
+    xml_schedule3Day,
+    xml_3in1_3Day,
+    xml_odds_3Day
+};

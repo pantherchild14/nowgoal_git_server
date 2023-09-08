@@ -1,9 +1,12 @@
 import { crawl1X2Detail } from "../crawler/1X2DetailCrawl.js";
+import { crawl3in1 } from "../crawler/3in1Crawl.js";
 import { crawlOUDetail } from "../crawler/OUDetailCrawl.js";
 import crawlGfOdds from "../crawler/gfdataoddsCrawl.js";
 import { crawlOdds } from "../crawler/oddsCrawl.js";
 import { crawlOddsDetail } from "../crawler/oddsDetailCrawl.js";
 import { parseXmlToJs, readXmlFile } from "../middleware/changeXML.js";
+import { DBH2H } from "../models/h2hModel.js";
+import { DBOddsHistory } from "../models/oddsHistoryModel.js";
 import { DBOdds } from "../models/oddsModel.js";
 import { DBSchedule } from "../models/scheduleModel.js";
 
@@ -65,16 +68,16 @@ const getOddsXML = async () => {
     }
 };
 
-const getOddsDetailXML = async () => {
+const getOdds3DayXML = async () => {
     try {
-        const filePath = "./data_xml/scheduleAll_data.xml";
+        const filePath = "./data_xml/schedule_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
 
-        const promises = matchIDs.map((id) => crawlOddsDetail(id));
+        const promises = matchIDs.map((id) => crawlOdds(id));
         const odds = await Promise.all(promises);
 
         const validOdds = odds.filter((odd) => odd !== null);
@@ -86,7 +89,7 @@ const getOddsDetailXML = async () => {
     }
 };
 
-const get1X2DetailXML = async () => {
+const get3in1XML = async () => {
     try {
         const filePath = "./data_xml/scheduleAll_data.xml";
         const xmlData = await readXmlFile(filePath);
@@ -95,7 +98,7 @@ const get1X2DetailXML = async () => {
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
 
-        const promises = matchIDs.map((id) => crawl1X2Detail(id));
+        const promises = matchIDs.map((id) => crawl3in1(id));
         const odds = await Promise.all(promises);
 
         const validOdds = odds.filter((odd) => odd !== null);
@@ -107,16 +110,16 @@ const get1X2DetailXML = async () => {
     }
 };
 
-const getOUDetailXML = async () => {
+const get3in13DayXML = async () => {
     try {
-        const filePath = "./data_xml/scheduleAll_data.xml";
+        const filePath = "./data_xml/schedule_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
 
-        const promises = matchIDs.map((id) => crawlOUDetail(id));
+        const promises = matchIDs.map((id) => crawl3in1(id));
         const odds = await Promise.all(promises);
 
         const validOdds = odds.filter((odd) => odd !== null);
@@ -128,38 +131,104 @@ const getOUDetailXML = async () => {
     }
 };
 
-const getOddsDetailHistoryXML = async () => {
-    try {
-        const oddsData = await getOddsDetailXML();
-        const x2Data = await get1X2DetailXML();
-        const ouData = await getOUDetailXML();
+/* ------------------------------------------------------ */
+/* Odd History was change new type */
 
-        // Gộp dữ liệu theo MATCH_ID
-        const combinedData = [];
+// const getOddsDetailXML = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
 
-        oddsData.forEach(odd => {
-            const matchId = odd.MATCH_ID;
-            const x2Match = x2Data.find(x2 => x2.MATCH_ID === matchId);
-            const ouMatch = ouData.find(ou => ou.MATCH_ID === matchId);
+//         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+//         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
 
-            if (x2Match && ouMatch) {
-                combinedData.push({
-                    MATCH_ID: matchId,
-                    ODDS_DETAIL: JSON.stringify(odd),
-                    X2_DETAIL: JSON.stringify(x2Match),
-                    OU_DETAIL: JSON.stringify(ouMatch)
-                });
-            }
-        });
+//         const promises = matchIDs.map((id) => crawlOddsDetail(id));
+//         const odds = await Promise.all(promises);
 
-        return Promise.resolve(combinedData);
-    } catch (error) {
-        console.error("Error while combining data: ", error);
-        return Promise.resolve([]);
-    }
-};
+//         const validOdds = odds.filter((odd) => odd !== null);
 
+//         return Promise.resolve(validOdds);
+//     } catch (error) {
+//         console.error("Error while fetching odds data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
 
+// const get1X2DetailXML = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+
+//         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+//         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+//         const promises = matchIDs.map((id) => crawl1X2Detail(id));
+//         const odds = await Promise.all(promises);
+
+//         const validOdds = odds.filter((odd) => odd !== null);
+
+//         return Promise.resolve(validOdds);
+//     } catch (error) {
+//         console.error("Error while fetching odds data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
+
+// const getOUDetailXML = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+
+//         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+//         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+//         const promises = matchIDs.map((id) => crawlOUDetail(id));
+//         const odds = await Promise.all(promises);
+
+//         const validOdds = odds.filter((odd) => odd !== null);
+
+//         return Promise.resolve(validOdds);
+//     } catch (error) {
+//         console.error("Error while fetching odds data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
+
+// const getOddsDetailHistoryXML = async () => {
+//     try {
+//         const oddsData = await getOddsDetailXML();
+//         const x2Data = await get1X2DetailXML();
+//         const ouData = await getOUDetailXML();
+
+//         // Gộp dữ liệu theo MATCH_ID
+//         const combinedData = [];
+
+//         oddsData.forEach(odd => {
+//             const matchId = odd.MATCH_ID;
+//             const x2Match = x2Data.find(x2 => x2.MATCH_ID === matchId);
+//             const ouMatch = ouData.find(ou => ou.MATCH_ID === matchId);
+
+//             if (x2Match && ouMatch) {
+//                 combinedData.push({
+//                     MATCH_ID: matchId,
+//                     ODDS_DETAIL: JSON.stringify(odd),
+//                     X2_DETAIL: JSON.stringify(x2Match),
+//                     OU_DETAIL: JSON.stringify(ouMatch)
+//                 });
+//             }
+//         });
+
+//         return Promise.resolve(combinedData);
+//     } catch (error) {
+//         console.error("Error while combining data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
+
+/* ------------------------------------------------------ */
 
 const updatedOdds = async (oddsData) => {
     const {
@@ -185,4 +254,44 @@ const updatedOdds = async (oddsData) => {
     return updateOdds;
 };
 
-export { getOdds, updatedOdds, getOddsGf, getOddsXML, getOddsDetailHistoryXML };
+const updateOddsHistory = async (oddsHistoryData) => {
+    const {
+        MATCH_ID,
+        ODDS,
+    } = oddsHistoryData;
+
+    const updatedOddsHistory = await DBOddsHistory.findOneAndUpdate(
+        { MATCH_ID: MATCH_ID },
+        {
+            MATCH_ID,
+            ODDS,
+        },
+        { upsert: true, new: true }
+    ).lean();
+
+    return updatedOddsHistory;
+};
+
+const updateH2H = async (H2HData) => {
+    const {
+        MATCH_ID,
+        H2H,
+        LAST_MATCH_HOME,
+        LAST_MATCH_AWAY,
+    } = H2HData;
+
+    const updatedH2H = await DBH2H.findOneAndUpdate(
+        { MATCH_ID: MATCH_ID },
+        {
+            MATCH_ID,
+            H2H,
+            LAST_MATCH_HOME,
+            LAST_MATCH_AWAY,
+        },
+        { upsert: true, new: true }
+    ).lean();
+
+    return updatedH2H;
+};
+
+export { getOdds, updatedOdds, getOddsGf, getOddsXML, updateOddsHistory, updateH2H, get3in1XML, get3in13DayXML, getOdds3DayXML };

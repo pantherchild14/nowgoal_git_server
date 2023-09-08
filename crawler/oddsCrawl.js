@@ -12,28 +12,28 @@ function generateUrl(domain, t, matchid, h, currentTime) {
 }
 
 const crawlOdds = async (matchid) => {
-    const currentTime = Date.now();
-    const DOMAIN = process.env.DOMAIN;
-    const t = 1;
-    const FT = 0;
-    const HT = 1;
-
-    const replacedUrlFT = generateUrl(DOMAIN, t, matchid, FT, currentTime);
-    const replacedUrlHT = generateUrl(DOMAIN, t, matchid, HT, currentTime);
     try {
+        const currentTime = Date.now();
+        const DOMAIN = process.env.DOMAIN;
+        const t = 1;
+        const FT = 0;
+        const HT = 1;
+
+        const replacedUrlFT = generateUrl(DOMAIN, t, matchid, FT, currentTime);
+        const replacedUrlHT = generateUrl(DOMAIN, t, matchid, HT, currentTime);
+
         const dataFT = await curl(replacedUrlFT);
         const dataHT = await curl(replacedUrlHT);
 
         if (dataFT["ErrCode"] !== 0 || dataHT["ErrCode"] !== 0) {
+            console.log(`Error fetching odds data for match ID ${matchid}`);
             return null;
         }
 
-        const mixoddsFT = dataFT["Data"]["mixodds"];
-        const arrBet365FT = process.env.BET_ID ? mixoddsFT.find((item) => item.cid === Number(process.env.BET_ID)) : undefined;
+        const arrBet365FT = process.env.BET_ID ? dataFT["Data"]["mixodds"].find((item) => item.cid === Number(process.env.BET_ID)) : undefined;
         const arrResFT = oddsFT(matchid, arrBet365FT);
 
-        const mixoddsHT = dataHT["Data"]["mixodds"];
-        const arrBet365HT = process.env.BET_ID ? mixoddsHT.find((item) => item.cid === Number(process.env.BET_ID)) : undefined;
+        const arrBet365HT = process.env.BET_ID ? dataHT["Data"]["mixodds"].find((item) => item.cid === Number(process.env.BET_ID)) : undefined;
         const arrResHT = oddsHT(matchid, arrBet365HT);
 
         if (arrResHT && arrResHT.MATCH_ID === arrResFT.MATCH_ID) {

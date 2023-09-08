@@ -1,4 +1,5 @@
 import { parseXmlToJs, readXmlFile } from "../middleware/changeXML.js";
+import { DBOddsHistory } from "../models/oddsHistoryModel.js";
 
 const getXmlOddsChange = async (req, res) => {
     try {
@@ -116,7 +117,7 @@ const getXmlOddsSingleAll = async (req, res) => {
 
 const getXmlOddsAll = async (req, res) => {
     try {
-        const filePath = "./data_xml/oddsAll_data.xml";
+        const filePath = "./data_xml/oddsAll_data_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
@@ -149,25 +150,42 @@ const getXmlH2H = async (req, res) => {
     }
 }
 
+// const getXmlOddsChangeDetailHistory = async (req, res) => {
+//     try {
+//         const filePath = "./data_xml/3in1_3_day.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+//         const oddsData = jsData['ODDS_DATA']['ODDS_ITEM'];
+
+//         const id = req.params.id;
+
+//         const matchedItem = oddsData.find(item => item['$']['_MATCH_ID'] === id);
+
+//         if (matchedItem) {
+//             res.status(200).json(matchedItem);
+//         } else {
+//             res.status(404).json({ error: "Matching item not found" });
+//         }
+//     } catch (error) {
+//         console.error("Error while emitting status data:", error.message);
+//         res.status(500).json({ error: "Error while emitting status data" });
+//     }
+// }
+
 const getXmlOddsChangeDetailHistory = async (req, res) => {
     try {
-        const filePath = "./data_xml/odds_change_detail_history.xml";
-        const xmlData = await readXmlFile(filePath);
-        const jsData = await parseXmlToJs(xmlData);
-        const oddsData = jsData['ODDS_DATA']['ODDS_ITEM'];
-
         const id = req.params.id;
 
-        const matchedItem = oddsData.find(item => item['$']['_MATCH_ID'] === id);
+        const matchedItem = await DBOddsHistory.findOne({ MATCH_ID: id });
 
         if (matchedItem) {
-            res.status(200).json(matchedItem);
+            return res.status(200).json(matchedItem);
         } else {
-            res.status(404).json({ error: "Matching item not found" });
+            return res.status(404).json({ error: "Matching item not found" });
         }
     } catch (error) {
         console.error("Error while emitting status data:", error.message);
-        res.status(500).json({ error: "Error while emitting status data" });
+        return res.status(500).json({ error: "Error while emitting status data" });
     }
 }
 

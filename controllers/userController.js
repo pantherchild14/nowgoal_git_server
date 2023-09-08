@@ -3,7 +3,7 @@ import bcryptjs from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 class userController {
-    static userRegistration = async(req, res) => {
+    static userRegistration = async (req, res) => {
         const { USER_NAME, EMAIL, PASSWORD } = req.body;
         try {
             if (USER_NAME && EMAIL && PASSWORD) {
@@ -37,7 +37,7 @@ class userController {
         }
     };
 
-    static userLogin = async(req, res) => {
+    static userLogin = async (req, res) => {
         const { EMAIL, PASSWORD } = req.body;
         try {
             if (EMAIL && PASSWORD) {
@@ -66,7 +66,7 @@ class userController {
         }
     }
 
-    static changePassword = async(req, res) => {
+    static changePassword = async (req, res) => {
         const { NEW_PASSWORD, CONFIRM_PASSWORD } = req.body;
         try {
             if (NEW_PASSWORD && CONFIRM_PASSWORD) {
@@ -88,7 +88,7 @@ class userController {
         }
     }
 
-    static getUser = async(req, res) => {
+    static getUser = async (req, res) => {
         try {
             const userName = req.params.user;
 
@@ -104,6 +104,22 @@ class userController {
             res.status(500).json({ error: "Error while retrieving user data" });
         }
     }
+
+    static getUsers = async (req, res) => {
+        try {
+            const userItems = await userModel.find();
+
+            if (userItems.length > 0) {
+                res.status(200).json(userItems);
+            } else {
+                res.status(404).json({ error: "No users found" });
+            }
+        } catch (error) {
+            console.error("Error while retrieving user data:", error.message);
+            res.status(500).json({ error: "Error while retrieving user data" });
+        }
+    }
+
 }
 
 
