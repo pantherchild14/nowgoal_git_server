@@ -38,29 +38,62 @@ const oddsByTimeMiddlerware = async (req, res, next) => {
     }
 };
 
+// const oddsAllDataMiddlerware = async (req, res, next) => {
+//     try {
+//         const filePath = "./data_xml/oddsAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+
+//         const oddsItems = jsData.ODDS_DATA.ODDS_ITEM;
+//         const updatePromises = oddsItems.map(async (match) => {
+//             const oddsData = {
+//                 MATCH_ID: match.$.MATCH_ID,
+//                 ODDS_AH_FT: match.$.ODDS_AH_FT,
+//                 ODDS_EURO_FT: match.$.ODDS_EURO_FT,
+//                 ODDS_OU_FT: match.$.ODDS_OU_FT,
+//                 ODDS_AH_HT: match.$.ODDS_AH_HT,
+//                 ODDS_EURO_HT: match.$.ODDS_EURO_HT,
+//                 ODDS_OU_HT: match.$.ODDS_OU_HT,
+//             };
+
+//             await updatedOdds(oddsData);
+//         });
+
+//         await Promise.all(updatePromises);
+
+//     } catch (error) {
+//         console.error("Error retrieving schedules by time:", error);
+//     }
+// };
+
 const oddsAllDataMiddlerware = async (req, res, next) => {
     try {
         const filePath = "./data_xml/oddsAll_data.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
-        const oddsItems = jsData.ODDS_DATA.ODDS_ITEM;
-        const updatePromises = oddsItems.map(async (match) => {
-            const oddsData = {
-                MATCH_ID: match.$.MATCH_ID,
-                ODDS_AH_FT: match.$.ODDS_AH_FT,
-                ODDS_EURO_FT: match.$.ODDS_EURO_FT,
-                ODDS_OU_FT: match.$.ODDS_OU_FT,
-                ODDS_AH_HT: match.$.ODDS_AH_HT,
-                ODDS_EURO_HT: match.$.ODDS_EURO_HT,
-                ODDS_OU_HT: match.$.ODDS_OU_HT,
-            };
+        if (jsData && jsData.ODDS_DATA && jsData.ODDS_DATA.ODDS_ITEM) {
+            const oddsItems = jsData.ODDS_DATA.ODDS_ITEM;
+            const updatePromises = oddsItems.map(async (match) => {
+                const oddsData = {
+                    MATCH_ID: match.$.MATCH_ID,
+                    ODDS_AH_FT: match.$.ODDS_AH_FT,
+                    ODDS_EURO_FT: match.$.ODDS_EURO_FT,
+                    ODDS_OU_FT: match.$.ODDS_OU_FT,
+                    ODDS_AH_HT: match.$.ODDS_AH_HT,
+                    ODDS_EURO_HT: match.$.ODDS_EURO_HT,
+                    ODDS_OU_HT: match.$.ODDS_OU_HT,
+                };
 
-            await updatedOdds(oddsData);
-        });
+                await updatedOdds(oddsData);
+            });
 
-        await Promise.all(updatePromises);
+            await Promise.all(updatePromises);
+        } else {
+            console.log("No data to process.");
+        }
 
+        next();
     } catch (error) {
         console.error("Error retrieving schedules by time:", error);
     }
@@ -68,7 +101,7 @@ const oddsAllDataMiddlerware = async (req, res, next) => {
 
 const oddsHistoryMiddlerware = async (req, res, next) => {
     try {
-        const filePath = "./data_xml/3in1.xml";
+        const filePath = "./data_xml/3in1_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 

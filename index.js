@@ -12,8 +12,10 @@ import optionRouter from "./routers/optionRouter.js";
 import connectDb from "./configs/mongooseDb.js";
 import { scheduleCron } from "./crons/scheduleCron.js";
 import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
-import { updateScheduleFor3Days, xml_3in1_3Day, xml_odds_3Day, xml_schedule3Day } from "./middleware/changeXML.js";
+import { updateScheduleFor3Days, xml_3in1_3Day, xml_odds_3Day, xml_schedule, xml_schedule3Day } from "./middleware/changeXML.js";
 import { deleteScheduledMatchesForDate } from "./controllers/scheduleController.js";
+import { scheduleJobs } from "./crons/scheduleJob.js";
+import { oddsHistoryMiddlerware } from "./middleware/oddsMiddleware.js";
 
 dotenv.config();
 
@@ -41,8 +43,11 @@ connectDb().then(() => {
         console.log(`Server is running on port ${PORT}`);
     });
 
-    scheduleCron();
+    // scheduleCron();
+    // scheduleJobs();
 
+    // xml_schedule();
+    // oddsHistoryMiddlerware();
     // xml_odds_3Day();
     // xml_3in1_3Day();
     // xml_schedule3Day();
