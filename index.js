@@ -43,7 +43,7 @@ connectDb().then(() => {
         console.log(`Server is running on port ${PORT}`);
     });
 
-    // scheduleCron();
+    scheduleCron();
     // scheduleJobs();
 
     // xml_schedule();
