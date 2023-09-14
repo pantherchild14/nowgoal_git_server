@@ -150,44 +150,44 @@ const getXmlH2H = async (req, res) => {
     }
 }
 
-// const getXmlOddsChangeDetailHistory = async (req, res) => {
-//     try {
-//         const filePath = "./data_xml/3in1_3_day.xml";
-//         const xmlData = await readXmlFile(filePath);
-//         const jsData = await parseXmlToJs(xmlData);
-//         const oddsData = jsData['ODDS_DATA']['ODDS_ITEM'];
-
-//         const id = req.params.id;
-
-//         const matchedItem = oddsData.find(item => item['$']['_MATCH_ID'] === id);
-
-//         if (matchedItem) {
-//             res.status(200).json(matchedItem);
-//         } else {
-//             res.status(404).json({ error: "Matching item not found" });
-//         }
-//     } catch (error) {
-//         console.error("Error while emitting status data:", error.message);
-//         res.status(500).json({ error: "Error while emitting status data" });
-//     }
-// }
-
 const getXmlOddsChangeDetailHistory = async (req, res) => {
     try {
+        const filePath = "./data_xml/3in1_3_day.xml";
+        const xmlData = await readXmlFile(filePath);
+        const jsData = await parseXmlToJs(xmlData);
+        const oddsData = jsData['ODDS_DATA']['ODDS_ITEM'];
+
         const id = req.params.id;
 
-        const matchedItem = await DBOddsHistory.findOne({ MATCH_ID: id });
+        const matchedItem = oddsData.find(item => item['$']['_MATCH_ID'] === id);
 
         if (matchedItem) {
-            return res.status(200).json(matchedItem);
+            res.status(200).json(matchedItem);
         } else {
-            return res.status(404).json({ error: "Matching item not found" });
+            res.status(404).json({ error: "Matching item not found" });
         }
     } catch (error) {
         console.error("Error while emitting status data:", error.message);
-        return res.status(500).json({ error: "Error while emitting status data" });
+        res.status(500).json({ error: "Error while emitting status data" });
     }
 }
+
+// const getXmlOddsChangeDetailHistory = async (req, res) => {
+//     try {
+//         const id = req.params.id;
+
+//         const matchedItem = await DBOddsHistory.findOne({ MATCH_ID: id });
+
+//         if (matchedItem) {
+//             return res.status(200).json(matchedItem);
+//         } else {
+//             return res.status(404).json({ error: "Matching item not found" });
+//         }
+//     } catch (error) {
+//         console.error("Error while emitting status data:", error.message);
+//         return res.status(500).json({ error: "Error while emitting status data" });
+//     }
+// }
 
 
 export { getXmlOddsChange, getXmlStatusChange, getXmlOddsSingleChange, getXmlScheduleSingleChange, getXmlScheduleSingleAll, getXmlOddsSingleAll, getXmlOddsAll, getXmlH2H, getXmlOddsChangeDetailHistory };

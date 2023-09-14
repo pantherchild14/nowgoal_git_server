@@ -42,16 +42,16 @@ export const scheduleCron = async () => {
     /* -------------- */
     /* H2H */
 
-    schedule.scheduleJob("cron-xmlH2h-10-minutes", "/4 * * * *", async () => {
+    schedule.scheduleJob("cron-xmlH2h-10-minutes", "*/4 * * * *", async () => {
         await xml_h2h();
         console.log("Crawling odds h2h every 4 minutes...");
     });
 
     // DB 
-    // schedule.scheduleJob("cron-H2HMiddlerware-15-minutes", "/6 * * * *", async () => {
-    //     await H2HMiddlerware();
-    //     console.log("Crawling  H2HMiddlerware every 6 minutes...");
-    // });
+    schedule.scheduleJob("cron-H2HMiddlerware-15-minutes", "*/8 * * * *", async () => {
+        await H2HMiddlerware();
+        console.log("Crawling  H2HMiddlerware every 6 minutes...");
+    });
 
     /* -------------- */
     /* Schedule */

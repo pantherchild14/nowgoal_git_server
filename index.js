@@ -53,6 +53,7 @@ connectDb().then(() => {
     // xml_schedule3Day();
     // updateScheduleFor3Days();
     // deleteScheduledMatchesForDate();
+    // console.log(getH2H())
 
 }).catch((err) => {
     console.log("err", err);
