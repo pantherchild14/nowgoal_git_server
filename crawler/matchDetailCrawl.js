@@ -30,7 +30,7 @@ function generateUrl(choiceDomain, domain, MATCH_ID) {
     return url;
 }
 
-const getDetail = async(matchid) => {
+const getDetail = async (matchid) => {
     const DOMAIN = process.env.DOMAIN;
     const replacedUrlFT = generateUrl('URL_DETAIL', DOMAIN, matchid);
     try {
@@ -42,6 +42,11 @@ const getDetail = async(matchid) => {
         const away = $("span[class='sclassName']").last().text().trim();
         const matchTime = $("#fbheader span[name='timeData']").attr("data-t");
         const league = $("#fbheader span[class='LName']").text().trim();
+
+        const weatherRow = $("#matchData #fbheader .vs .row").eq(4).text();
+        const weatherMatch = weatherRow.match(/Weather:\s+(.+)/);
+        const weatherInfo = weatherMatch ? weatherMatch[1].trim() : "";
+
         const match = {
             MATCH_ID: matchid,
             HOME_NAME: home,
@@ -49,6 +54,7 @@ const getDetail = async(matchid) => {
             LEAGUE_NAME: league,
             MATCH_TIME: matchTime,
             STATUS: status,
+            WHEATHER: weatherInfo,
         };
 
         const vsDiv = $("#mScore .half .vs");
@@ -69,7 +75,7 @@ const getDetail = async(matchid) => {
             match.AWAY_SCORE_FISRT_TIME = $("#mScore .end span[title='Score 1st Half']").text().split("-")[1];
             match.HOME_SCORE_SECOND_TIME = $("#mScore .end span[title='Score 2nd Half']").text().split("-")[0];
             match.AWAY_SCORE_SECOND_TIME = $("#mScore .end span[title='Score 2nd Half']").text().split("-")[1];
-            // match.VENUE = $("#matchData #fbheader .vs .row span").eq(2).text().trim();
+            // match.VENUE = $("#matchData #fbheader .vs .row").eq(2).text().trim();
         } else {
             match.HOME_SCORE = $("#mScore .half .score").eq(0).text();
             match.AWAY_SCORE = $("#mScore .half .score").eq(1).text();
@@ -84,7 +90,7 @@ const getDetail = async(matchid) => {
     }
 }
 
-const crawlMatchH2H = async(matchID) => {
+const crawlMatchH2H = async (matchID) => {
     try {
 
         const match = await getH2H(matchID);
@@ -155,7 +161,7 @@ const crawlMatchH2H = async(matchID) => {
  * 28 =>
  */
 
-const getH2H = async(matchid) => {
+const getH2H = async (matchid) => {
     const DOMAIN = process.env.DOMAIN;
     const replacedUrlFT = generateUrl('URL_ANALYSIS', DOMAIN, matchid);
     try {
@@ -175,7 +181,7 @@ const getH2H = async(matchid) => {
             ")": "",
         };
 
-        const arTitle = ["League", "Date", "Home", "Score", "Away", "Corner"];
+        const arTitle = ["League", "Date", "Home", "Score", "Away", "Corner", "W/L"];
         let ind = 0;
         $("#table_v3 tr").each((_, tr) => {
             if (ind < 3) {
@@ -187,6 +193,7 @@ const getH2H = async(matchid) => {
             let j = 0;
 
             $(tr).children("td").each((_, td) => {
+
                 const temp = $(td).text();
 
                 if (typeof temp === "string" && temp.trim() !== "") {
@@ -212,7 +219,11 @@ const getH2H = async(matchid) => {
                         if (secondPart && typeof secondPart === "string") {
                             arTemp[`Half${arTitle[j]}`] = secondPart.trim().replace(/formatDate|\(|'|\)/g, matched => arReplace[matched]);
                         }
-                    } else {
+                    }
+                    else if (arTitle[j] === "W/L") {
+                        arTemp["W_L"] = temp.split(" ").map(value => value.trim()).filter(value => value !== "").join(", ");
+                    }
+                    else {
                         arTemp[arTitle[j]] = temp.trim();
                     }
 
@@ -258,6 +269,8 @@ const getH2H = async(matchid) => {
                         if (secondPart && typeof secondPart === "string") {
                             arTemp[`Half${arTitle[j]}`] = secondPart.trim().replace(/formatDate|\(|'|\)/g, matched => arReplace[matched]);
                         }
+                    } else if (arTitle[j] === "W/L") {
+                        arTemp["W_L"] = temp.split(" ").map(value => value.trim()).filter(value => value !== "").join(", ");
                     } else {
                         arTemp[arTitle[j]] = temp;
                     }
@@ -303,6 +316,8 @@ const getH2H = async(matchid) => {
                         if (secondPart && typeof secondPart === "string") {
                             arTemp[`Half${arTitle[j]}`] = secondPart.trim().replace(/formatDate|\(|'|\)/g, matched => arReplace[matched]);
                         }
+                    } else if (arTitle[j] === "W/L") {
+                        arTemp["W_L"] = temp.split(" ").map(value => value.trim()).filter(value => value !== "").join(", ");
                     } else {
                         arTemp[arTitle[j]] = temp;
                     }

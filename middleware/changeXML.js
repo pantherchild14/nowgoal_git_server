@@ -50,8 +50,13 @@ const xml_change_schedule = async () => {
 
     while (retryCount < maxRetryCount) {
         try {
-            const checkID = await getOddsGf();
-            const promises = checkID.map((e) => getDetail(e.MATCH_ID));
+            const filePaths = "./data_xml/scheduleAll_data.xml";
+            const xmlData = await readXmlFile(filePaths);
+            const jsData = await parseXmlToJs(xmlData);
+
+            const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+            const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+            const promises = matchIDs.map((id) => getDetail(id));
             const results = await Promise.allSettled(promises);
             const filteredSchedules = results
                 .filter((result) => result.status === "fulfilled")
@@ -84,6 +89,53 @@ const xml_change_schedule = async () => {
         }
     }
 };
+
+// const xml_change_schedule_3day = async () => {
+//     let retryCount = 0;
+//     const maxRetryCount = 5;
+//     const retryDelay = 5000;
+
+//     while (retryCount < maxRetryCount) {
+//         try {
+//             const filePaths = "./data_xml/schedule_3_day.xml";
+//             const xmlData = await readXmlFile(filePaths);
+//             const jsData = await parseXmlToJs(xmlData);
+
+//             const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+//             const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+//             const promises = matchIDs.map((id) => getDetail(id));
+//             const results = await Promise.allSettled(promises);
+//             const filteredSchedules = results
+//                 .filter((result) => result.status === "fulfilled")
+//                 .map((result) => result.value);
+
+//             const root = xmlbuilder.create("SCHEDULE_DATA");
+//             filteredSchedules.forEach((item) => {
+//                 const oddsItem = root.ele("SCHEDULE_ITEM");
+//                 Object.keys(item).forEach((key) => {
+//                     oddsItem.att(key, item[key]);
+//                 });
+//             });
+//             const xmlString = root.end({ pretty: true });
+//             const folderPath = "./data_xml";
+//             try {
+//                 await fs.access(folderPath);
+//             } catch (err) {
+//                 await fs.mkdir(folderPath);
+//             }
+//             const filePath = "./data_xml/schedule_detail_3_day.xml";
+//             await fs.writeFile(filePath, xmlString);
+//             break;
+//         } catch (error) {
+//             console.error("Error while getting schedule data:", error.message);
+//             retryCount++;
+//             if (retryCount === maxRetryCount) {
+//                 throw error;
+//             }
+//             await new Promise((resolve) => setTimeout(resolve, retryDelay));
+//         }
+//     }
+// };
 
 const fetchH2HData = async (matchid, cache) => {
     if (cache.has(matchid)) {
@@ -521,5 +573,6 @@ export {
     updateScheduleFor3Days,
     xml_schedule3Day,
     xml_3in1_3Day,
-    xml_odds_3Day
+    xml_odds_3Day,
+    // xml_change_schedule_3day
 };
