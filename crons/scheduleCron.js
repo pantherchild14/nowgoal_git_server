@@ -18,7 +18,7 @@ export const scheduleCron = async () => {
     /* **********************************       XML         **************************************************** */
 
     // Cron /data_xml/oddsAll_data.xml 1 per day 1 phút
-    schedule.scheduleJob("cron-odds-2-minutes", "*/1 * * * *", async () => {
+    schedule.scheduleJob("cron-odds-1-minutes", "*/1 * * * *", async () => {
         await xml_odds();
         console.log("Crawling odds every 1 minutes...");
     });

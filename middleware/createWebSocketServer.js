@@ -85,7 +85,7 @@ const createWebSocketServer = (server) => {
 
             const intervalOdds = setInterval(async () => await emitOdds(socket), 5000);
             const intervalSchedule = setInterval(async () => await emitSchedule(socket), 120000);
-            const intervalXMLOdds = setInterval(async () => await emitXMLOdds(socket), 60000);
+            const intervalXMLOdds = setInterval(async () => await emitXMLOdds(socket), 30000);
             // const interval3in1 = setInterval(async () => await emit3in1(socket), 90000);
 
             socket.on("message", (message) => {
