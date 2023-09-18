@@ -92,8 +92,6 @@ const oddsAllDataMiddlerware = async (req, res, next) => {
         } else {
             console.log("No data to process.");
         }
-
-        next();
     } catch (error) {
         console.error("Error retrieving schedules by time:", error);
     }
@@ -101,7 +99,7 @@ const oddsAllDataMiddlerware = async (req, res, next) => {
 
 const oddsHistoryMiddlerware = async (req, res, next) => {
     try {
-        const filePath = "./data_xml/3in1_3_day.xml";
+        const filePath = "./data_xml/3in1.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 

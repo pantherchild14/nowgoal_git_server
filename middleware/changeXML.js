@@ -171,6 +171,41 @@ const h2h = async () => {
         const scheduleData = jsData['SCHEDULE_DATA']['SCHEDULE_ITEM'];
 
         const cache = new Map();
+
+        const currentTime = new Date().getTime();
+        const beforeTime = currentTime - 10 * 60 * 60 * 1000;
+        const endTime = currentTime + 0 * 60 * 60 * 1000;
+
+        const promises = scheduleData.map((match) => {
+            const matchTime = new Date(match.$.MATCH_TIME).getTime();
+            if (matchTime >= beforeTime && matchTime <= endTime) {
+                const matchId = match.$.MATCH_ID;
+                return fetchH2HData(matchId, cache);
+            }
+            return null;
+        });
+
+        const combinedData = await Promise.all(promises);
+
+        // Loại bỏ các giá trị null (trận đấu nằm ngoài khoảng thời gian)
+        const validData = combinedData.filter((data) => data !== null);
+
+        return validData;
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+
+const h2h_3day = async () => {
+    try {
+        const filePath = "./data_xml/schedule_3_day.xml";
+        const xmlData = await readXmlFile(filePath);
+        const jsData = await parseXmlToJs(xmlData);
+        const scheduleData = jsData['SCHEDULE_DATA']['SCHEDULE_ITEM'];
+
+        const cache = new Map();
         const promises = scheduleData.map((match) => fetchH2HData(match.$.MATCH_ID, cache));
         const combinedData = await Promise.all(promises);
 
@@ -202,6 +237,34 @@ const xml_h2h = async (req, res, next) => {
         }
         const filePath = "./data_xml/h2h_data.xml";
         await fs.writeFile(filePath, xmlString);
+        console.log("XML file successfully generated.");
+    } catch (error) {
+        console.error("Error crawl h2h xml : ", error);
+    }
+};
+
+const xml_h2h_3day = async (req, res, next) => {
+    try {
+        const results = await h2h_3day();
+        const scheduleArray = Array.isArray(results) ? results : [results];
+
+        const root = xmlbuilder.create("H2H_DATA");
+        scheduleArray.forEach((item) => {
+            const oddsItem = root.ele("H2H_ITEM");
+            Object.keys(item).forEach((key) => {
+                oddsItem.att(key, item[key]);
+            });
+        });
+        const xmlString = root.end({ pretty: true });
+        const folderPath = "./data_xml";
+        try {
+            await fs.access(folderPath);
+        } catch (err) {
+            await fs.mkdir(folderPath);
+        }
+        const filePath = "./data_xml/h2h_3_day.xml";
+        await fs.writeFile(filePath, xmlString);
+        console.log("XML file successfully h2h_3_day generated.");
     } catch (error) {
         console.error("Error crawl h2h xml : ", error);
     }
@@ -243,6 +306,48 @@ const xml_schedule = async (req, res, next) => {
         console.error("Error crawl schedule xml : ", error);
     }
 };
+
+const xml_schedule_deleted = async (req, res, next) => {
+    try {
+        const currentDate = new Date();
+
+        const yesterdayDate = new Date(currentDate);
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Sử dụng ngày hôm qua để lấy dữ liệu
+        const formattedDate = formatDate(yesterdayDate);
+        const results = await crawlSchedule(formattedDate);
+
+        const scheduleArray = Array.isArray(results) ? results : [results];
+
+        const root = xmlbuilder.create("SCHEDULE_DATA");
+        scheduleArray.forEach((item) => {
+            const oddsItem = root.ele("SCHEDULE_ITEM");
+            Object.keys(item).forEach((key) => {
+                oddsItem.att(key, item[key]);
+            });
+        });
+        const xmlString = root.end({ pretty: true });
+        const folderPath = "./data_xml";
+        try {
+            await fs.access(folderPath);
+        } catch (err) {
+            await fs.mkdir(folderPath);
+        }
+        const filePath = "./data_xml/scheduleDeleted_data.xml";
+        await fs.writeFile(filePath, xmlString);
+    } catch (error) {
+        console.error("Error crawl schedule xml : ", error);
+    }
+};
+
 
 const xml_schedule3Day = async (req, res, next) => {
     try {
@@ -565,8 +670,10 @@ export {
     xml_change_odds,
     xml_change_schedule,
     xml_schedule,
+    xml_schedule_deleted,
     xml_odds,
     xml_h2h,
+    xml_h2h_3day,
     readXmlFile,
     parseXmlToJs,
     xml_3in1,

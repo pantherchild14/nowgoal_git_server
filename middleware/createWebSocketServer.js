@@ -11,7 +11,7 @@ const createWebSocketServer = (server) => {
 
     const emitOdds = async (socket, callback) => {
         try {
-            await xml_change_odds();
+            // await xml_change_odds();
             const filePath = "./data_xml/odds_data.xml";
             const xmlData = await readXmlFile(filePath);
             const jsData = await parseXmlToJs(xmlData);
@@ -31,7 +31,7 @@ const createWebSocketServer = (server) => {
 
     const emitSchedule = async (socket) => {
         try {
-            await xml_change_schedule();
+            // await xml_change_schedule();
             const filePath = "./data_xml/schedule_data.xml";
             const xmlData = await readXmlFile(filePath);
             const jsData = await parseXmlToJs(xmlData);
@@ -47,7 +47,7 @@ const createWebSocketServer = (server) => {
 
     const emitXMLOdds = async (socket) => {
         try {
-            await xml_odds();
+            // await xml_odds();
             const filePath = "./data_xml/oddsAll_data.xml";
             const xmlData = await readXmlFile(filePath);
             const jsData = await parseXmlToJs(xmlData);
@@ -79,11 +79,9 @@ const createWebSocketServer = (server) => {
 
     io.on("connection", async (socket) => {
         try {
-            await emitOdds(socket, async () => {
-                await emitSchedule(socket);
-                // await emit3in1(socket)
-                await emitXMLOdds(socket)
-            });
+            await emitOdds(socket);
+            await emitXMLOdds(socket);
+            await emitSchedule(socket);
 
             const intervalOdds = setInterval(async () => await emitOdds(socket), 5000);
             const intervalSchedule = setInterval(async () => await emitSchedule(socket), 120000);

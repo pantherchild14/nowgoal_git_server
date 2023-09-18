@@ -1,5 +1,4 @@
 import { parseXmlToJs, readXmlFile } from "../middleware/changeXML.js";
-import { DBOddsHistory } from "../models/oddsHistoryModel.js";
 
 const getXmlOddsChange = async (req, res) => {
     try {
@@ -130,7 +129,8 @@ const getXmlOddsAll = async (req, res) => {
 
 const getXmlH2H = async (req, res) => {
     try {
-        const filePath = "./data_xml/h2h_data.xml";
+        // const filePath = "./data_xml/h2h_data.xml";
+        const filePath = "./data_xml/h2h_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
         const scheduleData = jsData['H2H_DATA']['H2H_ITEM'];
@@ -138,7 +138,6 @@ const getXmlH2H = async (req, res) => {
         const id = req.params.id;
 
         const matchedItem = scheduleData.find(item => item['$']['MATCH_ID'] === id);
-
         if (matchedItem) {
             res.status(200).json(matchedItem);
         } else {
@@ -152,7 +151,7 @@ const getXmlH2H = async (req, res) => {
 
 const getXmlOddsChangeDetailHistory = async (req, res) => {
     try {
-        const filePath = "./data_xml/3in1_3_day.xml";
+        const filePath = "./data_xml/3in1.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
         const oddsData = jsData['ODDS_DATA']['ODDS_ITEM'];

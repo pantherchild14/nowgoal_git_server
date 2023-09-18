@@ -53,8 +53,18 @@ const getOddsXML = async () => {
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
+        const currentTime = new Date().getTime();
+        const twoHoursEarlier = currentTime - 10 * 60 * 60 * 1000;
+        const fiveHoursLater = currentTime + 0 * 60 * 60 * 1000;
+
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
-        const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+        const filteredSchedule = scheduleItems.filter((item) => {
+            const matchTime = new Date(item.$.MATCH_TIME).getTime();
+            return matchTime >= twoHoursEarlier && matchTime <= fiveHoursLater;
+        });
+
+        const matchIDs = filteredSchedule.map((item) => item.$.MATCH_ID);
 
         const promises = matchIDs.map((id) => crawlOdds(id));
         const odds = await Promise.all(promises);
@@ -95,8 +105,18 @@ const get3in1XML = async () => {
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
+        const currentTime = new Date().getTime();
+        const twoHoursEarlier = currentTime - 10 * 60 * 60 * 1000;
+        const fiveHoursLater = currentTime + 0 * 60 * 60 * 1000;
+
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
-        const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+        const filteredSchedule = scheduleItems.filter((item) => {
+            const matchTime = new Date(item.$.MATCH_TIME).getTime();
+            return matchTime >= twoHoursEarlier && matchTime <= fiveHoursLater;
+        });
+
+        const matchIDs = filteredSchedule.map((item) => item.$.MATCH_ID);
 
         const promises = matchIDs.map((id) => crawl3in1(id));
         const odds = await Promise.all(promises);

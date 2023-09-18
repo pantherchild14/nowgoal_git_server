@@ -12,11 +12,12 @@ import optionRouter from "./routers/optionRouter.js";
 import connectDb from "./configs/mongooseDb.js";
 import { scheduleCron } from "./crons/scheduleCron.js";
 import { createWebSocketServer } from "./middleware/createWebSocketServer.js";
-import { updateScheduleFor3Days, xml_3in1, xml_3in1_3Day, xml_change_schedule, xml_h2h, xml_odds_3Day, xml_schedule, xml_schedule3Day } from "./middleware/changeXML.js";
+import { updateScheduleFor3Days, xml_3in1, xml_3in1_3Day, xml_change_schedule, xml_h2h, xml_h2h_3day, xml_odds, xml_odds_3Day, xml_schedule, xml_schedule3Day, xml_schedule_deleted } from "./middleware/changeXML.js";
 import { deleteScheduledMatchesForDate } from "./controllers/scheduleController.js";
 import { scheduleJobs } from "./crons/scheduleJob.js";
 import { oddsHistoryMiddlerware } from "./middleware/oddsMiddleware.js";
 import { crawlMatchH2H, getDetail } from "./crawler/matchDetailCrawl.js";
+import { getXmlH2H, getXmlOddsChangeDetailHistory } from "./controllers/xmlController.js";
 
 dotenv.config();
 
@@ -46,20 +47,6 @@ connectDb().then(() => {
 
     scheduleCron();
 
-
-    // scheduleJobs();
-
-    // xml_schedule();
-    // oddsHistoryMiddlerware();
-    // xml_odds_3Day();
-    // xml_3in1_3Day();
-    // xml_schedule3Day();
-    // updateScheduleFor3Days();
-    // deleteScheduledMatchesForDate();
-    // xml_h2h();
-    // xml_3in1();
-
-    // xml_change_schedule();
 
 }).catch((err) => {
     console.log("err", err);
