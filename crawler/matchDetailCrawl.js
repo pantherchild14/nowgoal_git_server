@@ -37,15 +37,51 @@ const getDetail = async (matchid) => {
         const htmlData = await crawlLink(replacedUrlFT);
         const $ = cheerio.load(htmlData);
 
-        const status = $("#mScore span").first().text().trim();
-        const home = $("span[class='sclassName']").first().text().trim();
-        const away = $("span[class='sclassName']").last().text().trim();
+        // const status = $("#mScore span").first().text().trim();
+        // const status = $("#mScore .end .row:eq(0)").text().trim();
+        let status = "";
+        const mStatus = $("#mScore .end .row:eq(0)");
+        if (mStatus.length > 0) {
+            status = mStatus.text().trim();
+        } else {
+            const mScore = $("#mScore .vs");
+            if (mScore.length > 0) {
+                if (mScore.hasClass("row")) {
+                    // const vsText = mScore.text();
+                    status = ("");
+                } else {
+                    const vsDiv = $("#mScore .half .vs");
+                    if (vsDiv.length > 0) {
+                        if (vsDiv.hasClass("hhs")) {
+                            status = "2nd Half";
+                        } else {
+                            status = "1st Half";
+                        }
+                    }
+                }
+            }
+        }
+
+        const home = $("div[class='sclassName']").first().text().trim();
+        const away = $("div[class='sclassName']").last().text().trim();
         const matchTime = $("#fbheader span[name='timeData']").attr("data-t");
         const league = $("#fbheader span[class='LName']").text().trim();
+        // const weatherRow = $("#matchData #fbheader .vs .row").eq(4).text();
+        // const weatherMatch = weatherRow.match(/Weather:\s+(.+)/);
+        // const weatherInfo = weatherMatch ? weatherMatch[1].trim() : "";
+        let weatherInfo = "";
 
-        const weatherRow = $("#matchData #fbheader .vs .row").eq(4).text();
-        const weatherMatch = weatherRow.match(/Weather:\s+(.+)/);
-        const weatherInfo = weatherMatch ? weatherMatch[1].trim() : "";
+        const weatherRow = $("#matchData #fbheader .weather");
+        if (weatherRow.length > 0) {
+            const thirdSpan = $("#otherInfo span:eq(2)");
+            if (thirdSpan.length > 0) {
+                const weatherText = thirdSpan.text().trim();
+                weatherInfo = weatherText;
+            } else {
+                weatherInfo = "";
+            }
+        }
+
 
         const match = {
             MATCH_ID: matchid,
@@ -68,6 +104,30 @@ const getDetail = async (matchid) => {
             match.START_TIME = "";
         }
 
+
+        // const mScoreEnd = $("#mScore .end .row:eq(0)");
+        // if (mScoreEnd.length > 0) {
+        //     match.START_TIME = mScoreEnd.text().trim();
+        // } else {
+        //     const mScore = $("#mScore .vs");
+        //     if (mScore.length > 0) {
+        //         if (mScore.hasClass("row")) {
+        //             // const vsText = mScore.text();
+        //             match.START_TIME = "";
+        //         } else {
+        //             const vsDiv = $("#mScore .half .vs");
+        //             if (vsDiv.length > 0) {
+        //                 if (vsDiv.hasClass("hhs")) {
+        //                     match.START_TIME = "2nd Half";
+        //                 } else {
+        //                     match.START_TIME = "1st Half";
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+
         if (status === "Finished") {
             match.HOME_SCORE = $("#mScore .end .score").eq(0).text();
             match.AWAY_SCORE = $("#mScore .end .score").eq(1).text();
@@ -84,7 +144,9 @@ const getDetail = async (matchid) => {
             match.HOME_SCORE_SECOND_TIME = $("#mScore .half span[title='Score 2nd Half']").text().split("-")[0];
             match.AWAY_SCORE_SECOND_TIME = $("#mScore .half span[title='Score 2nd Half']").text().split("-")[1];
         }
+
         return match;
+
     } catch (err) {
         throw err;
     }

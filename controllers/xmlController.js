@@ -149,9 +149,11 @@ const getXmlH2H = async (req, res) => {
     }
 }
 
+
 const getXmlOddsChangeDetailHistory = async (req, res) => {
     try {
-        const filePath = "./data_xml/3in1.xml";
+        const filePath = "./data_xml/3in1_3_day.xml";
+        // const filePath = "./data_xml/3in1.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
         const oddsData = jsData['ODDS_DATA']['ODDS_ITEM'];
@@ -170,23 +172,6 @@ const getXmlOddsChangeDetailHistory = async (req, res) => {
         res.status(500).json({ error: "Error while emitting status data" });
     }
 }
-
-// const getXmlOddsChangeDetailHistory = async (req, res) => {
-//     try {
-//         const id = req.params.id;
-
-//         const matchedItem = await DBOddsHistory.findOne({ MATCH_ID: id });
-
-//         if (matchedItem) {
-//             return res.status(200).json(matchedItem);
-//         } else {
-//             return res.status(404).json({ error: "Matching item not found" });
-//         }
-//     } catch (error) {
-//         console.error("Error while emitting status data:", error.message);
-//         return res.status(500).json({ error: "Error while emitting status data" });
-//     }
-// }
 
 
 export { getXmlOddsChange, getXmlStatusChange, getXmlOddsSingleChange, getXmlScheduleSingleChange, getXmlScheduleSingleAll, getXmlOddsSingleAll, getXmlOddsAll, getXmlH2H, getXmlOddsChangeDetailHistory };

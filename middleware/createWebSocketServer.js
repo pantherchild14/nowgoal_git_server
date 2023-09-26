@@ -11,7 +11,7 @@ const createWebSocketServer = (server) => {
 
     const emitOdds = async (socket, callback) => {
         try {
-            // await xml_change_odds();
+            await xml_change_odds();
             const filePath = "./data_xml/odds_data.xml";
             const xmlData = await readXmlFile(filePath);
             const jsData = await parseXmlToJs(xmlData);
@@ -61,32 +61,71 @@ const createWebSocketServer = (server) => {
         }
     };
 
-    // const emit3in1 = async (socket) => {
-    //     try {
-    //         await xml_3in1();
-    //         const filePath = "./data_xml/3in1.xml";
-    //         const xmlData = await readXmlFile(filePath);
-    //         const jsData = await parseXmlToJs(xmlData);
-    //         socket.emit("3IN1", JSON.stringify(jsData));
-    //     } catch (error) {
-    //         console.error("Error fetching 3in1 data:", error.message);
-    //         socket.emit("ERROR", "An error occurred while fetching 3in1 data.");
-    //         if (error.message.includes("ETIMEDOUT")) {
-    //             setTimeout(async () => await emit3in1(socket), 5000);
-    //         }
-    //     }
-    // };
+    const emit3in1 = async (socket) => {
+        try {
+            const filePath = "./data_xml/3in1.xml";
+            const xmlData = await readXmlFile(filePath);
+            const jsData = await parseXmlToJs(xmlData);
+            socket.emit("3IN1", JSON.stringify(jsData));
+        } catch (error) {
+            console.error("Error fetching 3in1 data:", error.message);
+            socket.emit("ERROR", "An error occurred while fetching 3in1 data.");
+            if (error.message.includes("ETIMEDOUT")) {
+                setTimeout(async () => await emit3in1(socket), 5000);
+            }
+        }
+    };
+
+    const emith2h = async (socket) => {
+        try {
+            const filePath = "./data_xml/h2h_data.xml";
+            const xmlData = await readXmlFile(filePath);
+            const jsData = await parseXmlToJs(xmlData);
+            socket.emit("H2H", JSON.stringify(jsData));
+        } catch (error) {
+            console.error("Error fetching H2H data:", error.message);
+            socket.emit("ERROR", "An error occurred while fetching H2H data.");
+            if (error.message.includes("ETIMEDOUT")) {
+                setTimeout(async () => await emith2h(socket), 5000);
+            }
+        }
+    };
+
+    const emitTimeRun = async (socket) => {
+        try {
+            const filePath = "./data_xml/time_run.xml";
+            const xmlData = await readXmlFile(filePath);
+            const jsData = await parseXmlToJs(xmlData);
+            socket.emit("TIME_RUN", JSON.stringify(jsData));
+        } catch (error) {
+            console.error("Error fetching TIME RUN data:", error.message);
+            socket.emit("ERROR", "An error occurred while fetching TIME RUN data.");
+            if (error.message.includes("ETIMEDOUT")) {
+                setTimeout(async () => await emitTimeRun(socket), 5000);
+            }
+        }
+    };
+
 
     io.on("connection", async (socket) => {
         try {
             await emitOdds(socket);
             await emitXMLOdds(socket);
             await emitSchedule(socket);
+            await emit3in1(socket);
 
-            const intervalOdds = setInterval(async () => await emitOdds(socket), 5000);
+            const intervalOdds = await emitOdds(socket);
+            const intervalOddsRT = setInterval(async () => await emitOdds(socket), 5000);
             const intervalSchedule = setInterval(async () => await emitSchedule(socket), 120000);
-            const intervalXMLOdds = setInterval(async () => await emitXMLOdds(socket), 30000);
-            // const interval3in1 = setInterval(async () => await emit3in1(socket), 90000);
+            const intervalXMLOdds = await emitXMLOdds(socket);
+            const intervalXMLOddsRT = setInterval(async () => await emitXMLOdds(socket), 60000);
+            const interval3in1 = await emit3in1(socket);
+            const interval3in1RT = setInterval(async () => await emit3in1(socket), 120000);
+            const intervalH2H = await emith2h(socket);
+            const intervalH2HRT = setInterval(async () => await emith2h(socket), 120000);
+
+            const intervalTIMERUN = await emitTimeRun(socket);
+            const intervalTIMERUNRT = setInterval(async () => await emitTimeRun(socket), 30000);
 
             socket.on("message", (message) => {
                 console.log("Received message:", message);
@@ -94,9 +133,16 @@ const createWebSocketServer = (server) => {
 
             socket.on("disconnect", () => {
                 clearInterval(intervalOdds);
+                clearInterval(intervalOddsRT);
                 clearInterval(intervalSchedule);
-                // clearInterval(interval3in1);
+                clearInterval(interval3in1);
                 clearInterval(intervalXMLOdds);
+                clearInterval(intervalXMLOddsRT);
+                clearInterval(interval3in1RT);
+                clearInterval(intervalH2H);
+                clearInterval(intervalH2HRT);
+                clearInterval(intervalTIMERUN);
+                clearInterval(intervalTIMERUNRT);
             });
         } catch (error) {
             console.error("Error processing socket connection:", error.message);

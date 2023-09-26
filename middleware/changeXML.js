@@ -1,6 +1,9 @@
 import xmlbuilder from "xmlbuilder";
 import { promises as fs } from "fs";
 import { Parser } from "xml2js";
+import { setHours, setMinutes, setSeconds, addHours } from "date-fns";
+import { utcToZonedTime } from 'date-fns-tz';
+
 import { get3in13DayXML, get3in1XML, getOdds3DayXML, getOddsGf, getOddsXML } from "../controllers/oddsController.js";
 import { getDetail, crawlMatchH2H } from "../crawler/matchDetailCrawl.js";
 import { crawlSchedule } from "../crawler/scheduleCrawl.js";
@@ -32,6 +35,7 @@ const xml_change_odds = async () => {
             const filePath = "./data_xml/odds_data.xml";
             await fs.writeFile(filePath, xmlString);
             break;
+            // console.log("XML file successfully odds_data_RealTime generated.");
         } catch (error) {
             // console.error("Error while getting odds data:", error.message);
             retryCount++;
@@ -50,12 +54,24 @@ const xml_change_schedule = async () => {
 
     while (retryCount < maxRetryCount) {
         try {
-            const filePaths = "./data_xml/scheduleAll_data.xml";
+            const filePaths = "./data_xml/schedule_3_day.xml";
             const xmlData = await readXmlFile(filePaths);
             const jsData = await parseXmlToJs(xmlData);
 
             const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
-            const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+            const currentTime = new Date(); // Thời gian hiện tại
+            const currentTimeGMT7 = utcToZonedTime(currentTime, 'Asia/Ho_Chi_Minh'); // Chuyển đổi sang GMT+7
+
+            // Tạo thời gian bắt đầu (12:00 PM) và thời gian kết thúc (12:00 PM ngày tiếp theo) cho việc so sánh
+            const todayStart = setSeconds(setMinutes(setHours(currentTimeGMT7, 6), 0), 0);
+            const tomorrowStart = setSeconds(setMinutes(setHours(addHours(currentTimeGMT7, 24), 12), 0), 0);
+            // // Lọc ra các sự kiện nằm trong khoảng từ 12:00AM hôm nay đến 12:00AM ngày mai
+            const validEvents = scheduleItems.filter((item) => {
+                const eventTimeGMT7 = utcToZonedTime(new Date(Number(item.$.TIME_STAMP)), 'Asia/Ho_Chi_Minh');
+                return eventTimeGMT7 >= todayStart && eventTimeGMT7 <= tomorrowStart;
+            });
+            const matchIDs = validEvents.map((item) => item.$.MATCH_ID);
             const promises = matchIDs.map((id) => getDetail(id));
             const results = await Promise.allSettled(promises);
             const filteredSchedules = results
@@ -165,26 +181,30 @@ const fetchH2HData = async (matchid, cache) => {
 
 const h2h = async () => {
     try {
-        const filePath = "./data_xml/scheduleAll_data.xml";
+        const filePath = "./data_xml/schedule_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
-        const scheduleData = jsData['SCHEDULE_DATA']['SCHEDULE_ITEM'];
+
+        const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+
+        const currentTime = new Date(); // Thời gian hiện tại
+        const currentTimeGMT7 = utcToZonedTime(currentTime, 'Asia/Ho_Chi_Minh'); // Chuyển đổi sang GMT+7
+
+        // Tạo thời gian bắt đầu (12:00 PM) và thời gian kết thúc (12:00 PM ngày tiếp theo) cho việc so sánh
+        const todayStart = setSeconds(setMinutes(setHours(currentTimeGMT7, 6), 0), 0);
+        const tomorrowStart = setSeconds(setMinutes(setHours(addHours(currentTimeGMT7, 24), 12), 0), 0);
+        // // Lọc ra các sự kiện nằm trong khoảng từ 12:00AM hôm nay đến 12:00AM ngày mai
+        const validEvents = scheduleItems.filter((item) => {
+            const eventTimeGMT7 = utcToZonedTime(new Date(Number(item.$.TIME_STAMP)), 'Asia/Ho_Chi_Minh');
+            return eventTimeGMT7 >= todayStart && eventTimeGMT7 <= tomorrowStart;
+        });
 
         const cache = new Map();
 
-        const currentTime = new Date().getTime();
-        const beforeTime = currentTime - 10 * 60 * 60 * 1000;
-        const endTime = currentTime + 0 * 60 * 60 * 1000;
-
-        const promises = scheduleData.map((match) => {
-            const matchTime = new Date(match.$.MATCH_TIME).getTime();
-            if (matchTime >= beforeTime && matchTime <= endTime) {
-                const matchId = match.$.MATCH_ID;
-                return fetchH2HData(matchId, cache);
-            }
-            return null;
+        const promises = validEvents.map((match) => {
+            const matchId = match.$.MATCH_ID;
+            return fetchH2HData(matchId, cache);
         });
-
         const combinedData = await Promise.all(promises);
 
         // Loại bỏ các giá trị null (trận đấu nằm ngoài khoảng thời gian)
@@ -196,6 +216,39 @@ const h2h = async () => {
         return [];
     }
 };
+
+// const h2h = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+//         const scheduleData = jsData['SCHEDULE_DATA']['SCHEDULE_ITEM'];
+
+//         const cache = new Map();
+
+//         const currentTime = new Date().getTime();
+//         const beforeTime = currentTime - 10 * 60 * 60 * 1000;
+//         const endTime = currentTime + 0 * 60 * 60 * 1000;
+
+//         const promises = scheduleData.map((match) => {
+//             const matchTime = new Date(match.$.MATCH_TIME).getTime();
+//             if (matchTime >= beforeTime && matchTime <= endTime) {
+//                 const matchId = match.$.MATCH_ID;
+//                 return fetchH2HData(matchId, cache);
+//             }
+//             return null;
+//         });
+//         const combinedData = await Promise.all(promises);
+
+//         // Loại bỏ các giá trị null (trận đấu nằm ngoài khoảng thời gian)
+//         const validData = combinedData.filter((data) => data !== null);
+
+//         return validData;
+//     } catch (err) {
+//         console.log(err);
+//         return [];
+//     }
+// };
 
 
 const h2h_3day = async () => {

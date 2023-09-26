@@ -1,3 +1,6 @@
+import { setHours, setMinutes, setSeconds, addHours } from "date-fns";
+import { utcToZonedTime } from 'date-fns-tz';
+
 import { crawl1X2Detail } from "../crawler/1X2DetailCrawl.js";
 import { crawl3in1 } from "../crawler/3in1Crawl.js";
 import { crawlOUDetail } from "../crawler/OUDetailCrawl.js";
@@ -49,12 +52,24 @@ const getOddsGf = async () => {
 
 const getOddsXML = async () => {
     try {
-        const filePath = "./data_xml/scheduleAll_data.xml";
+        const filePath = "./data_xml/schedule_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
-        const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+        const currentTime = new Date(); // Thời gian hiện tại
+        const currentTimeGMT7 = utcToZonedTime(currentTime, 'Asia/Ho_Chi_Minh'); // Chuyển đổi sang GMT+7
+
+        // Tạo thời gian bắt đầu (12:00 PM) và thời gian kết thúc (12:00 PM ngày tiếp theo) cho việc so sánh
+        const todayStart = setSeconds(setMinutes(setHours(currentTimeGMT7, 6), 0), 0);
+        const tomorrowStart = setSeconds(setMinutes(setHours(addHours(currentTimeGMT7, 24), 12), 0), 0);
+        // // Lọc ra các sự kiện nằm trong khoảng từ 12:00AM hôm nay đến 12:00AM ngày mai
+        const validEvents = scheduleItems.filter((item) => {
+            const eventTimeGMT7 = utcToZonedTime(new Date(Number(item.$.TIME_STAMP)), 'Asia/Ho_Chi_Minh');
+            return eventTimeGMT7 >= todayStart && eventTimeGMT7 <= tomorrowStart;
+        });
+        const matchIDs = validEvents.map((item) => item.$.MATCH_ID);
 
         const promises = matchIDs.map((id) => crawlOdds(id));
         const odds = await Promise.all(promises);
@@ -67,6 +82,27 @@ const getOddsXML = async () => {
         return Promise.resolve([]);
     }
 };
+
+// const getOddsXML = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+
+//         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+//         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+//         const promises = matchIDs.map((id) => crawlOdds(id));
+//         const odds = await Promise.all(promises);
+
+//         const validOdds = odds.filter((odd) => odd !== null);
+
+//         return Promise.resolve(validOdds);
+//     } catch (error) {
+//         console.error("Error while fetching odds data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
 
 const getOdds3DayXML = async () => {
     try {
@@ -89,24 +125,29 @@ const getOdds3DayXML = async () => {
     }
 };
 
+
 const get3in1XML = async () => {
     try {
-        const filePath = "./data_xml/scheduleAll_data.xml";
+        // const filePath = "./data_xml/scheduleAll_data.xml";
+        const filePath = "./data_xml/schedule_3_day.xml";
         const xmlData = await readXmlFile(filePath);
         const jsData = await parseXmlToJs(xmlData);
 
-        const currentTime = new Date().getTime();
-        const twoHoursEarlier = currentTime - 10 * 60 * 60 * 1000;
-        const fiveHoursLater = currentTime + 0 * 60 * 60 * 1000;
-
         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
 
-        const filteredSchedule = scheduleItems.filter((item) => {
-            const matchTime = new Date(item.$.MATCH_TIME).getTime();
-            return matchTime >= twoHoursEarlier && matchTime <= fiveHoursLater;
+        const currentTime = new Date(); // Thời gian hiện tại
+        const currentTimeGMT7 = utcToZonedTime(currentTime, 'Asia/Ho_Chi_Minh'); // Chuyển đổi sang GMT+7
+
+        // Tạo thời gian bắt đầu (12:00 PM) và thời gian kết thúc (12:00 PM ngày tiếp theo) cho việc so sánh
+        const todayStart = setSeconds(setMinutes(setHours(currentTimeGMT7, 6), 0), 0);
+        const tomorrowStart = setSeconds(setMinutes(setHours(addHours(currentTimeGMT7, 24), 12), 0), 0);
+        // // Lọc ra các sự kiện nằm trong khoảng từ 12:00AM hôm nay đến 12:00AM ngày mai
+        const validEvents = scheduleItems.filter((item) => {
+            const eventTimeGMT7 = utcToZonedTime(new Date(Number(item.$.TIME_STAMP)), 'Asia/Ho_Chi_Minh');
+            return eventTimeGMT7 >= todayStart && eventTimeGMT7 <= tomorrowStart;
         });
 
-        const matchIDs = filteredSchedule.map((item) => item.$.MATCH_ID);
+        const matchIDs = validEvents.map((item) => item.$.MATCH_ID);
 
         const promises = matchIDs.map((id) => crawl3in1(id));
         const odds = await Promise.all(promises);
@@ -119,6 +160,60 @@ const get3in1XML = async () => {
         return Promise.resolve([]);
     }
 };
+
+
+// const get3in1XML = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+
+//         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+
+//         const matchIDs = scheduleItems.map((item) => item.$.MATCH_ID);
+
+//         const promises = matchIDs.map((id) => crawl3in1(id));
+//         const odds = await Promise.all(promises);
+
+//         const validOdds = odds.filter((odd) => odd !== null);
+
+//         return Promise.resolve(validOdds);
+//     } catch (error) {
+//         console.error("Error while fetching odds data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
+
+// const get3in1XML = async () => {
+//     try {
+//         const filePath = "./data_xml/scheduleAll_data.xml";
+//         const xmlData = await readXmlFile(filePath);
+//         const jsData = await parseXmlToJs(xmlData);
+
+//         const currentTime = new Date().getTime();
+//         const twoHoursEarlier = currentTime - 10 * 60 * 60 * 1000;
+//         const fiveHoursLater = currentTime + 0 * 60 * 60 * 1000;
+
+//         const scheduleItems = jsData.SCHEDULE_DATA.SCHEDULE_ITEM;
+
+//         const filteredSchedule = scheduleItems.filter((item) => {
+//             const matchTime = new Date(item.$.MATCH_TIME).getTime();
+//             return matchTime >= twoHoursEarlier && matchTime <= fiveHoursLater;
+//         });
+
+//         const matchIDs = filteredSchedule.map((item) => item.$.MATCH_ID);
+
+//         const promises = matchIDs.map((id) => crawl3in1(id));
+//         const odds = await Promise.all(promises);
+
+//         const validOdds = odds.filter((odd) => odd !== null);
+
+//         return Promise.resolve(validOdds);
+//     } catch (error) {
+//         console.error("Error while fetching odds data: ", error);
+//         return Promise.resolve([]);
+//     }
+// };
 
 const get3in13DayXML = async () => {
     try {

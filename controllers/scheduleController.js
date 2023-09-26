@@ -4,11 +4,17 @@ import { getOddsGf } from "./oddsController.js";
 
 const getSchedule = async (req, res) => {
     try {
+        // const timestamp = req.body.timestamp;
+        // const startDate = new Date(timestamp);
+        // startDate.setUTCHours(startDate.getUTCHours() - 10, 0, 0, 0);
+        // const endDate = new Date(timestamp);
+        // endDate.setUTCHours(23, 59, 59, 999);
+
         const timestamp = req.body.timestamp;
         const startDate = new Date(timestamp);
-        startDate.setUTCHours(startDate.getUTCHours() - 10, 0, 0, 0);
-        const endDate = new Date(timestamp);
-        endDate.setUTCHours(23, 59, 59, 999);
+        startDate.setUTCHours(startDate.getUTCHours() - 2, 0, 0, 0);
+        const endDate = new Date(startDate);
+        endDate.setUTCHours(endDate.getUTCDate() + 25, 0, 0, 0);
 
         const schedules = await DBSchedule.find({
             TIME_STAMP: {
